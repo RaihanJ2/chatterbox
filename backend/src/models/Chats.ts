@@ -12,6 +12,7 @@ export interface ChatType extends Document {
   messages: MessageType[];
   createdAt: Date;
   updatedAt: Date;
+  generateTitle(): void;
 }
 
 const MessageSchema = new Schema({
@@ -53,13 +54,33 @@ const ChatSchema = new Schema(
 ChatSchema.index({ userId: 1, updatedAt: -1 });
 
 // Method to generate title from first message
-ChatSchema.methods.generateTitle = function () {
+ChatSchema.methods.generateTitle = function (this: ChatType) {
   if (this.messages.length > 0 && this.messages[0].role === "user") {
-    const firstMessage = this.messages[0].content;
-    this.title =
-      firstMessage.length > 50
-        ? firstMessage.substring(0, 47) + "..."
-        : firstMessage;
+    const firstMessage = this.messages[0].content.trim();
+
+    if (firstMessage.length === 0) {
+      this.title = "New Chat";
+      return;
+    }
+
+    // Clean up the message: remove extra whitespace and newlines
+    const cleanMessage = firstMessage.replace(/\s+/g, " ");
+
+    // Generate title with better truncation (avoid cutting words)
+    if (cleanMessage.length <= 50) {
+      this.title = cleanMessage;
+    } else {
+      // Find the last space before position 47 to avoid cutting words
+      const truncateAt = cleanMessage.lastIndexOf(" ", 47);
+      if (truncateAt > 20) {
+        // Only use word boundary if it's not too short
+        this.title = cleanMessage.substring(0, truncateAt) + "...";
+      } else {
+        this.title = cleanMessage.substring(0, 47) + "...";
+      }
+    }
+  } else {
+    this.title = "New Chat";
   }
 };
 

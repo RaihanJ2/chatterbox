@@ -1,8 +1,8 @@
-import express, { Request, Response } from "express";
+import { Request, Response, Router } from "express";
 import { authenticateToken } from "./auth";
 import Chat from "../models/Chats";
 
-const router = express.Router();
+const router = Router();
 
 // Get all chats for a user
 router.get(
@@ -26,7 +26,10 @@ router.get(
             ? chat.messages[chat.messages.length - 1].content.substring(
                 0,
                 100
-              ) + "..."
+              ) +
+              (chat.messages[chat.messages.length - 1].content.length > 100
+                ? "..."
+                : "")
             : null,
       }));
 
@@ -137,6 +140,31 @@ router.delete(
     } catch (error) {
       console.error("Error deleting chat:", error);
       res.status(500).json({ error: "Failed to delete chat" });
+    }
+  }
+);
+
+// Clear all messages from a chat (optional additional endpoint)
+router.delete(
+  "/:chatId/messages",
+  authenticateToken,
+  async (req: Request & { user?: any }, res: Response) => {
+    try {
+      const chat = await Chat.findOneAndUpdate(
+        { _id: req.params.chatId, userId: req.user.id },
+        { messages: [] },
+        { new: true }
+      );
+
+      if (!chat) {
+        res.status(404).json({ error: "Chat not found" });
+        return;
+      }
+
+      res.json({ message: "Chat messages cleared successfully", chat });
+    } catch (error) {
+      console.error("Error clearing chat messages:", error);
+      res.status(500).json({ error: "Failed to clear chat messages" });
     }
   }
 );

@@ -8,7 +8,7 @@ import MongoStore from "connect-mongo";
 import passport from "passport";
 import authRoutes from "./routes/auth";
 import chatRoutes from "./routes/chat";
-import chatHistoryRoutes from "./routes/chatHistory"; // Add this import
+import chatHistoryRoutes from "./routes/chatHistory";
 
 declare module "express-session" {
   interface SessionData {
@@ -53,7 +53,7 @@ app.use(passport.initialize());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
-app.use("/api/chats", chatHistoryRoutes); // Add this line
+app.use("/api/chats", chatHistoryRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

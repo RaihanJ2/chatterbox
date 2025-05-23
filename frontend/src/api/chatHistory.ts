@@ -1,22 +1,4 @@
-import axios from "axios";
-
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-// Configure axios to include auth token
-axios.defaults.withCredentials = true;
-
-axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
 export interface ChatSummary {
   _id: string;
@@ -38,11 +20,33 @@ export interface ChatHistory {
   updatedAt: string;
 }
 
+// Helper function to make authenticated requests
+const makeAuthenticatedRequest = async (
+  url: string,
+  options: RequestInit = {}
+) => {
+  const response = await fetch(url, {
+    ...options,
+    credentials: "include", // Use cookies instead of Bearer tokens
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API Error: ${response.status} - ${errorText}`);
+  }
+
+  return response;
+};
+
 // Get all chat summaries for the user
 export const getChatHistory = async (): Promise<ChatSummary[]> => {
   try {
-    const response = await axios.get(`${API_URL}/api/chats`);
-    return response.data;
+    const response = await makeAuthenticatedRequest(`${API_URL}/api/chats`);
+    return response.json();
   } catch (error) {
     console.error("Error fetching chat history:", error);
     throw error;
@@ -52,8 +56,10 @@ export const getChatHistory = async (): Promise<ChatSummary[]> => {
 // Get specific chat with all messages
 export const getChatById = async (chatId: string): Promise<ChatHistory> => {
   try {
-    const response = await axios.get(`${API_URL}/api/chats/${chatId}`);
-    return response.data;
+    const response = await makeAuthenticatedRequest(
+      `${API_URL}/api/chats/${chatId}`
+    );
+    return response.json();
   } catch (error) {
     console.error("Error fetching chat:", error);
     throw error;
@@ -63,8 +69,11 @@ export const getChatById = async (chatId: string): Promise<ChatHistory> => {
 // Create new chat
 export const createNewChat = async (title?: string): Promise<ChatHistory> => {
   try {
-    const response = await axios.post(`${API_URL}/api/chats`, { title });
-    return response.data;
+    const response = await makeAuthenticatedRequest(`${API_URL}/api/chats`, {
+      method: "POST",
+      body: JSON.stringify({ title }),
+    });
+    return response.json();
   } catch (error) {
     console.error("Error creating chat:", error);
     throw error;
@@ -77,7 +86,10 @@ export const updateChatTitle = async (
   title: string
 ): Promise<void> => {
   try {
-    await axios.patch(`${API_URL}/api/chats/${chatId}/title`, { title });
+    await makeAuthenticatedRequest(`${API_URL}/api/chats/${chatId}/title`, {
+      method: "PATCH",
+      body: JSON.stringify({ title }),
+    });
   } catch (error) {
     console.error("Error updating chat title:", error);
     throw error;
@@ -87,58 +99,30 @@ export const updateChatTitle = async (
 // Delete chat
 export const deleteChat = async (chatId: string): Promise<void> => {
   try {
-    await axios.delete(`${API_URL}/api/chats/${chatId}`);
+    await makeAuthenticatedRequest(`${API_URL}/api/chats/${chatId}`, {
+      method: "DELETE",
+    });
   } catch (error) {
     console.error("Error deleting chat:", error);
     throw error;
   }
 };
 
-// Updated sendMessageToAPI to include chatId and use proper authentication
+// Send message to API
 export async function sendMessageToAPI(
   message: string,
   chatId?: string
 ): Promise<{ response: string; chatId: string; title: string }> {
   try {
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
-      throw new Error("Authentication required. Please log in.");
-    }
-
-    const res = await fetch(`${API_URL}/api/chat`, {
+    const response = await makeAuthenticatedRequest(`${API_URL}/api/chat`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      credentials: "include",
       body: JSON.stringify({
         message,
         chatId,
       }),
     });
 
-    if (!res.ok) {
-      const errorData = await res.text();
-      console.error("API error:", errorData);
-
-      if (res.status === 401) {
-        throw new Error(
-          "Authentication failed. Please check if you're logged in."
-        );
-      } else if (res.status === 403) {
-        throw new Error(
-          "Authorization failed. You don't have permission to access this resource."
-        );
-      } else if (res.status === 429) {
-        throw new Error("Rate limit exceeded. Please try again later.");
-      } else {
-        throw new Error(`API error: ${res.status}`);
-      }
-    }
-
-    const data = await res.json();
+    const data = await response.json();
     return {
       response: data.response,
       chatId: data.chatId,

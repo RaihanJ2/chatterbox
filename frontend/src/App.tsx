@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-// import { sendMessageToAPI } from "./services/api";
+import { sendMessageToAPI } from "./api/chat";
 import ChatMessage from "./components/ChatMessage";
 import ChatInput from "./components/ChatInput";
 import { Box } from "lucide-react";
 import { motion } from "framer-motion";
 import { FaGoogle } from "react-icons/fa";
 import { getSession, logout } from "./api/auth";
-import { useNavigate } from "react-router-dom";
 
 interface Message {
   id: string;
@@ -30,8 +29,6 @@ function App() {
   const [apiError, setApiError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [session, setSession] = useState<Session | null>(null);
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSession = async () => {

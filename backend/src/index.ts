@@ -1,3 +1,4 @@
+// backend/src/index.ts
 import express from "express";
 import session from "express-session";
 import dotenv from "dotenv";
@@ -7,6 +8,7 @@ import MongoStore from "connect-mongo";
 import passport from "passport";
 import authRoutes from "./routes/auth";
 import chatRoutes from "./routes/chat";
+import chatHistoryRoutes from "./routes/chatHistory"; // Add this import
 
 declare module "express-session" {
   interface SessionData {
@@ -51,6 +53,7 @@ app.use(passport.initialize());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/chats", chatHistoryRoutes); // Add this line
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

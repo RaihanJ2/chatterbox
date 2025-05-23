@@ -1,3 +1,4 @@
+// This file is deprecated - use chatHistory.ts instead
 export async function sendMessageToAPI(
   message: string,
   chatHistory: { role: string; content: string }[] = []
@@ -5,10 +6,17 @@ export async function sendMessageToAPI(
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   try {
+    const token = localStorage.getItem("authToken");
+
+    if (!token) {
+      throw new Error("Authentication required. Please log in.");
+    }
+
     const res = await fetch(`${API_URL}/api/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       credentials: "include",
       body: JSON.stringify({
@@ -35,8 +43,9 @@ export async function sendMessageToAPI(
         throw new Error(`API error: ${res.status}`);
       }
     }
+
     const data = await res.json();
-    return data.res;
+    return data.response; // Updated to match backend response format
   } catch (error) {
     console.error("Error calling API:", error);
     throw error;

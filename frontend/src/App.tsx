@@ -1,11 +1,20 @@
 import { useState, useEffect, useRef } from "react";
-import { sendMessageToAPI } from "./api/chat";
 import ChatMessage from "./components/ChatMessage";
 import ChatInput from "./components/ChatInput";
+import ChatSidebar from "./components/ChatSidebar";
 import { Box } from "lucide-react";
 import { motion } from "framer-motion";
 import { FaGoogle } from "react-icons/fa";
 import { getSession, logout } from "./api/auth";
+import {
+  sendMessageToAPI,
+  getChatHistory,
+  getChatById,
+  createNewChat,
+  updateChatTitle,
+  deleteChat,
+  ChatSummary,
+} from "./api/chatHistory";
 
 interface Message {
   id: string;
@@ -13,6 +22,7 @@ interface Message {
   role: "user" | "assistant";
   timestamp: Date;
 }
+
 interface User {
   id: string;
   name?: string;
@@ -23,17 +33,27 @@ interface User {
 interface Session {
   user: User | null;
 }
+
 function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [chats, setChats] = useState<ChatSummary[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | undefined>();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
       const sessionData = await getSession();
       setSession(sessionData);
+
+      if (sessionData?.user) {
+        // Load chat history if user is logged in
+        await loadChatHistory();
+      }
+
       setIsLoading(false);
     };
 
@@ -45,6 +65,76 @@ function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const loadChatHistory = async () => {
+    try {
+      const chatHistory = await getChatHistory();
+      setChats(chatHistory);
+    } catch (error) {
+      console.error("Error loading chat history:", error);
+    }
+  };
+
+  const handleChatSelect = async (chatId: string) => {
+    try {
+      setIsLoading(true);
+      const chat = await getChatById(chatId);
+
+      // Convert chat messages to the expected format
+      const formattedMessages: Message[] = chat.messages.map((msg, index) => ({
+        id: `${chatId}-${index}`,
+        content: msg.content,
+        role: msg.role,
+        timestamp: new Date(msg.timestamp),
+      }));
+
+      setMessages(formattedMessages);
+      setCurrentChatId(chatId);
+      setSidebarOpen(false); // Close sidebar on mobile after selection
+    } catch (error) {
+      console.error("Error loading chat:", error);
+      setApiError("Failed to load chat");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleNewChat = () => {
+    setMessages([]);
+    setCurrentChatId(undefined);
+    setSidebarOpen(false);
+  };
+
+  const handleDeleteChat = async (chatId: string) => {
+    try {
+      await deleteChat(chatId);
+
+      // Remove from local state
+      setChats(chats.filter((chat) => chat._id !== chatId));
+
+      // If we're currently viewing this chat, start a new one
+      if (currentChatId === chatId) {
+        handleNewChat();
+      }
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+      setApiError("Failed to delete chat");
+    }
+  };
+
+  const handleUpdateTitle = async (chatId: string, title: string) => {
+    try {
+      await updateChatTitle(chatId, title);
+
+      // Update local state
+      setChats(
+        chats.map((chat) => (chat._id === chatId ? { ...chat, title } : chat))
+      );
+    } catch (error) {
+      console.error("Error updating chat title:", error);
+      throw error;
+    }
+  };
+
   const handleGoogleSignIn = () => {
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
     window.location.href = `${apiUrl}/api/auth/google`;
@@ -54,11 +144,20 @@ function App() {
     const success = await logout();
     if (success) {
       setSession({ user: null });
+      setMessages([]);
+      setChats([]);
+      setCurrentChatId(undefined);
     }
   };
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
+
+    // Check if user is logged in
+    if (!session?.user) {
+      setApiError("Please log in to send messages");
+      return;
+    }
 
     // Reset any previous errors
     setApiError(null);
@@ -75,24 +174,40 @@ function App() {
     setIsLoading(true);
 
     try {
-      // Prepare chat history for context
-      const chatHistory = messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
-
-      // Call API
-      const response = await sendMessageToAPI(content, chatHistory);
+      // Call API with current chat ID
+      const response = await sendMessageToAPI(content, currentChatId);
 
       // Add assistant's response to chat
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: response,
+        content: response.response,
         role: "assistant",
         timestamp: new Date(),
       };
 
       setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+
+      // Update current chat ID if this was a new chat
+      if (!currentChatId) {
+        setCurrentChatId(response.chatId);
+        // Refresh chat history to show the new chat
+        await loadChatHistory();
+      } else {
+        // Update the existing chat in the sidebar
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat._id === response.chatId
+              ? {
+                  ...chat,
+                  title: response.title,
+                  messageCount: chat.messageCount + 2, // user + assistant message
+                  updatedAt: new Date().toISOString(),
+                  lastMessage: response.response.substring(0, 100) + "...",
+                }
+              : chat
+          )
+        );
+      }
     } catch (error) {
       console.error("Error sending message:", error);
 
@@ -104,7 +219,7 @@ function App() {
       // Add error message
       const errorResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: `Sorry, there was an error: ${errorMessage}. Please check your API key or try again later.`,
+        content: `Sorry, there was an error: ${errorMessage}. Please try again later.`,
         role: "assistant",
         timestamp: new Date(),
       };
@@ -115,142 +230,200 @@ function App() {
     }
   };
 
-  return (
-    <div className="flex flex-col h-screen font-poppins bg-[#432439] ">
-      {/* Header */}
-      <header className="bg-[#602a4b] py-4 px-6">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <motion.h1
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="flex flex-row items-center justify-center  text-[#c1a57b] text-xl font-medium"
-          >
-            Chatterb
-            <motion.span
-              initial={{ scale: 0, rotate: 0 }}
-              animate={{ scale: 1, rotate: 360 }}
-              whileTap={{ rotate: 0 }}
-            >
-              <Box />
-            </motion.span>
-            x
-          </motion.h1>
-          {session?.user ? (
-            <div className="flex items-center gap-3">
-              {session.user.image && (
-                <div className="w-8 h-8 rounded-full overflow-hidden">
-                  <img
-                    src={session.user.image}
-                    alt={`${session.user.name}'s profile`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <button
-                onClick={handleLogout}
-                className="cursor-pointer text-[#c1a57b] px-4 py-2 rounded-md hover:bg-[#502040]"
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleGoogleSignIn}
-              className="cursor-pointer text-[#c1a57b] flex flex-row items-center gap-2 p-2 rounded-md hover:bg-[#502040]"
-            >
-              <FaGoogle /> Login with Google
-            </button>
-          )}
-        </div>
-      </header>
+  if (isLoading && !session) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#432439]">
+        <div className="text-[#c1a57b] text-xl">Loading...</div>
+      </div>
+    );
+  }
 
-      {/* Main chat area */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto p-6 space-y-6">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+  return (
+    <div className="flex h-screen font-poppins bg-[#432439]">
+      {/* Sidebar - only show if user is logged in */}
+      {session?.user && (
+        <ChatSidebar
+          chats={chats}
+          currentChatId={currentChatId}
+          onChatSelect={handleChatSelect}
+          onNewChat={handleNewChat}
+          onDeleteChat={handleDeleteChat}
+          onUpdateTitle={handleUpdateTitle}
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+        />
+      )}
+
+      {/* Main content */}
+      <div className="flex flex-col flex-1">
+        {/* Header */}
+        <header className="bg-[#602a4b] py-4 px-6">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <motion.h1
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex flex-row items-center justify-center text-[#c1a57b] text-xl font-medium"
+            >
+              Chatterb
               <motion.span
                 initial={{ scale: 0, rotate: 0 }}
                 animate={{ scale: 1, rotate: 360 }}
-                className="text-[#c1a57b] font-bold bg-[#602a4b] p-4 rounded-full "
+                whileTap={{ rotate: 0 }}
               >
-                <Box size={50} />
+                <Box />
               </motion.span>
-              <motion.h2
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="text-xl font-medium text-[#b09a7d] mb-2"
-              >
-                How can I help you today?
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.65 }}
-                className="text-[#b09a7d] max-w-md"
-              >
-                Ask me anything, from solving complex problems to creative
-                tasks.
-              </motion.p>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                content={message.content}
-                role={message.role}
-              />
-            ))
-          )}
-          {apiError && (
-            <div className="text-red-500 text-sm">API Error: {apiError}</div>
-          )}
-          {isLoading && (
-            <div className="flex items-start">
-              <div className="w-8 h-8 rounded-full bg-[#602a4b] flex items-center justify-center mr-4 flex-shrink-0">
-                <span className="text-[#c1a57b] font-bold text-sm">
-                  <Box />
+              x
+            </motion.h1>
+            {session?.user ? (
+              <div className="flex items-center gap-3">
+                {session.user.image && (
+                  <div className="w-8 h-8 rounded-full overflow-hidden">
+                    <img
+                      src={session.user.image}
+                      alt={`${session.user.name}'s profile`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <span className="text-[#c1a57b] text-sm">
+                  {session.user.name}
                 </span>
+                <button
+                  onClick={handleLogout}
+                  className="cursor-pointer text-[#c1a57b] px-4 py-2 rounded-md hover:bg-[#502040]"
+                >
+                  Logout
+                </button>
               </div>
-              <div className="flex space-x-2 mt-3">
-                {[0, 1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    animate={{
-                      scale: [1, 1.4, 1],
-                      opacity: [0.6, 1, 0.6],
-                    }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: i * 0.2,
-                    }}
-                    className="h-2 w-2 bg-[#c1a57b] rounded-full"
-                  ></motion.div>
-                ))}
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </main>
+            ) : (
+              <button
+                onClick={handleGoogleSignIn}
+                className="cursor-pointer text-[#c1a57b] flex flex-row items-center gap-2 p-2 rounded-md hover:bg-[#502040]"
+              >
+                <FaGoogle /> Login with Google
+              </button>
+            )}
+          </div>
+        </header>
 
-      {/* Input area */}
-      <footer className=" p-4 bg-[#602a4b]">
-        <div className="max-w-4xl mx-auto">
-          <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-xs text-center text-[#b09a7d] mt-2"
-          >
-            Chatterbox may display inaccurate info, including about people, so
-            double-check its responses.
-          </motion.div>
-        </div>
-      </footer>
+        {/* Main chat area */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-4xl mx-auto p-6 space-y-6">
+            {!session?.user ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                <motion.span
+                  initial={{ scale: 0, rotate: 0 }}
+                  animate={{ scale: 1, rotate: 360 }}
+                  className="text-[#c1a57b] font-bold bg-[#602a4b] p-4 rounded-full"
+                >
+                  <Box size={50} />
+                </motion.span>
+                <motion.h2
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-xl font-medium text-[#b09a7d] mb-2"
+                >
+                  Welcome to Chatterbox
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.65 }}
+                  className="text-[#b09a7d] max-w-md"
+                >
+                  Please log in with Google to start chatting and save your
+                  conversation history.
+                </motion.p>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                <motion.span
+                  initial={{ scale: 0, rotate: 0 }}
+                  animate={{ scale: 1, rotate: 360 }}
+                  className="text-[#c1a57b] font-bold bg-[#602a4b] p-4 rounded-full"
+                >
+                  <Box size={50} />
+                </motion.span>
+                <motion.h2
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-xl font-medium text-[#b09a7d] mb-2"
+                >
+                  How can I help you today?
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.65 }}
+                  className="text-[#b09a7d] max-w-md"
+                >
+                  Ask me anything, from solving complex problems to creative
+                  tasks.
+                </motion.p>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <ChatMessage
+                  key={message.id}
+                  content={message.content}
+                  role={message.role}
+                />
+              ))
+            )}
+            {apiError && (
+              <div className="text-red-500 text-sm">Error: {apiError}</div>
+            )}
+            {isLoading && (
+              <div className="flex items-start">
+                <div className="w-8 h-8 rounded-full bg-[#602a4b] flex items-center justify-center mr-4 flex-shrink-0">
+                  <span className="text-[#c1a57b] font-bold text-sm">
+                    <Box />
+                  </span>
+                </div>
+                <div className="flex space-x-2 mt-3">
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      animate={{
+                        scale: [1, 1.4, 1],
+                        opacity: [0.6, 1, 0.6],
+                      }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: i * 0.2,
+                      }}
+                      className="h-2 w-2 bg-[#c1a57b] rounded-full"
+                    ></motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </main>
+
+        {/* Input area */}
+        <footer className="p-4 bg-[#602a4b]">
+          <div className="max-w-4xl mx-auto">
+            <ChatInput
+              onSendMessage={handleSendMessage}
+              disabled={isLoading || !session?.user}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-xs text-center text-[#b09a7d] mt-2"
+            >
+              Chatterbox may display inaccurate info, including about people, so
+              double-check its responses.
+            </motion.div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }

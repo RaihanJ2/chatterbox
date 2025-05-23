@@ -2,6 +2,22 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+// Configure axios to include auth token
+axios.defaults.withCredentials = true;
+
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 export interface ChatSummary {
   _id: string;
   title: string;
@@ -78,18 +94,23 @@ export const deleteChat = async (chatId: string): Promise<void> => {
   }
 };
 
-// Updated sendMessageToAPI to include chatId
+// Updated sendMessageToAPI to include chatId and use proper authentication
 export async function sendMessageToAPI(
   message: string,
   chatId?: string
 ): Promise<{ response: string; chatId: string; title: string }> {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
   try {
+    const token = localStorage.getItem("authToken");
+
+    if (!token) {
+      throw new Error("Authentication required. Please log in.");
+    }
+
     const res = await fetch(`${API_URL}/api/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       credentials: "include",
       body: JSON.stringify({

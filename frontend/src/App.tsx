@@ -53,6 +53,7 @@ function App() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [sidebarOpen]);
+
   useEffect(() => {
     const fetchSession = async () => {
       const sessionData = await getSession();
@@ -248,8 +249,8 @@ function App() {
   }
 
   return (
-    <div className="flex w-full h-screen font-poppins bg-[#432439]">
-      {/* Sidebar - only show if user is logged in */}
+    <div className="flex w-full h-screen font-poppins bg-[#432439] relative">
+      {/* Sidebar - always render if user is logged in, positioned fixed */}
       {session?.user && (
         <ChatSidebar
           chats={chats}
@@ -263,8 +264,8 @@ function App() {
         />
       )}
 
-      {/* Main content */}
-      <div className="flex flex-col flex-1">
+      {/* Main content - always full width since sidebar is fixed */}
+      <div className="flex flex-col flex-1 w-full">
         {/* Header */}
         <header className="bg-[#602a4b] py-4 px-6">
           <div className="max-w-4xl mx-auto flex items-center justify-between">

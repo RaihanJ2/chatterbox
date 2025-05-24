@@ -89,14 +89,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
+      {/* Sidebar - Fixed positioning for both mobile and desktop */}
       <motion.aside
         initial={false}
         animate={{
           x: isOpen ? 0 : -320,
         }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed md:relative left-0 top-0 h-full w-80 bg-[#351a2b] z-50 md:z-0 flex flex-col border-r border-[#602a4b] shadow-xl md:shadow-none"
+        className="fixed left-0 top-0 h-full w-80 bg-[#351a2b] z-50 flex flex-col border-r border-[#602a4b] shadow-xl"
       >
         {/* Header */}
         <div className="p-4 border-b border-[#602a4b] flex items-center justify-between bg-[#2a1521]">

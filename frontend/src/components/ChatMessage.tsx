@@ -89,7 +89,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role }) => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
         className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-          isAssistant ? "bg-[#602a4b] mr-4" : "bg-[#b09a7d] ml-4 text-[#602a4b]"
+          isAssistant
+            ? "bg-colors-secondary mr-4"
+            : "bg-[#b09a7d] ml-4 text-[#602a4b]"
         }`}
       >
         {isAssistant ? (
@@ -104,7 +106,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role }) => {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-[#602a4b] p-3 rounded-xl max-w-none text-white"
+        className=" bg-colors-secondary p-3 rounded-xl max-w-none text-white"
       >
         {renderContent()}
       </motion.div>

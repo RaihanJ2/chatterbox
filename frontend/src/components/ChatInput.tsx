@@ -11,7 +11,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled }) => {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "0px";
@@ -40,7 +39,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled }) => {
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        className="flex flex-row justify-center border rounded-lg border-[#b09a7d] dark:border-[#8c5568] items-center bg-[#432439] shadow-sm"
+        className="flex flex-row justify-center border rounded-lg border-lightText dark:border-accent items-center bg-primary shadow-sm"
       >
         <textarea
           ref={textareaRef}
@@ -49,7 +48,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled }) => {
           onKeyDown={handleKeyDown}
           placeholder="Message Box..."
           disabled={disabled}
-          className="flex-1 py-3 px-4 bg-transparent text-[#c1a57b] placeholder-[#8c5568] dark:placeholder-[#b09a7d] outline-none resize-none min-h-[52px] max-h-[200px] overflow-auto"
+          className="flex-1 py-3 px-4 bg-transparent text-highlight placeholder-accent dark:placeholder-lightText outline-none resize-none min-h-[52px] max-h-[200px] overflow-auto"
           rows={1}
         />
         <motion.button
@@ -58,10 +57,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled }) => {
           transition={{ delay: 0.5 }}
           type="submit"
           disabled={!message.trim() || disabled}
-          className={` p-2 rounded-md mx-3 ${
+          className={`p-2 rounded-md mx-3 ${
             !message.trim() || disabled
-              ? "text-[#8c5568] "
-              : "text-[#c1a57b] bg-[#602a4b] hover:bg-[#432439] cursor-pointer"
+              ? "text-accent"
+              : "text-highlight bg-secondary hover:bg-primary cursor-pointer"
           }`}
         >
           <SendHorizontal />

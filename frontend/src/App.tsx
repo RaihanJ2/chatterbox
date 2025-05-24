@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import ChatMessage from "./components/ChatMessage";
 import ChatInput from "./components/ChatInput";
 import ChatSidebar from "./components/ChatSidebar";
-import { Box } from "lucide-react";
+import { Box, Menu } from "lucide-react";
 import { motion } from "framer-motion";
 import { FaGoogle } from "react-icons/fa";
 import { getSession, logout } from "./api/auth";
@@ -267,23 +267,34 @@ function App() {
       {/* Main content - always full width since sidebar is fixed */}
       <div className="flex flex-col flex-1 w-full">
         {/* Header */}
-        <header className="bg-[#602a4b] py-4 px-6">
+        <header className=" bg-[#602a4b] py-4 px-6">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <motion.h1
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex flex-row items-center justify-center text-[#c1a57b] text-xl font-medium"
-            >
-              Chatterb
-              <motion.span
-                initial={{ scale: 0, rotate: 0 }}
-                animate={{ scale: 1, rotate: 360 }}
-                whileTap={{ rotate: 0 }}
+            <div className="flex items-center gap-3">
+              {/* Menu button beside logo - only show when user is logged in */}
+              {session?.user && (
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="text-[#c1a57b] hover:text-white p-2 rounded-lg hover:bg-[#502040] transition-colors"
+                >
+                  <Menu size={20} />
+                </button>
+              )}
+              <motion.h1
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="flex flex-row items-center justify-center text-[#c1a57b] text-xl font-medium"
               >
-                <Box />
-              </motion.span>
-              x
-            </motion.h1>
+                Chatterb
+                <motion.span
+                  initial={{ scale: 0, rotate: 0 }}
+                  animate={{ scale: 1, rotate: 360 }}
+                  whileTap={{ rotate: 0 }}
+                >
+                  <Box />
+                </motion.span>
+                x
+              </motion.h1>
+            </div>
             {session?.user ? (
               <div className="flex items-center gap-3">
                 {session.user.image && (
@@ -418,7 +429,7 @@ function App() {
 
         {/* Input area */}
         <footer className="p-4 bg-[#602a4b]">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl pl-2 mx-auto">
             <ChatInput
               onSendMessage={handleSendMessage}
               disabled={isLoading || !session?.user}

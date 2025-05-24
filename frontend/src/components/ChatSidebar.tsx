@@ -7,7 +7,6 @@ import {
   Edit3,
   Check,
   X,
-  Menu,
   ChevronLeft,
 } from "lucide-react";
 import { ChatSummary } from "../api/chatHistory";
@@ -70,22 +69,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             className="fixed inset-0 bg-black/50 z-40 md:hidden"
             onClick={onToggle}
           />
-        )}
-      </AnimatePresence>
-
-      {/* Toggle button - always visible when sidebar is closed */}
-      <AnimatePresence>
-        {!isOpen && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onToggle}
-            className="fixed top-20 left-4 z-30 bg-[#602a4b] text-[#c1a57b] p-3 rounded-lg shadow-lg hover:bg-[#502040] transition-colors"
-          >
-            <Menu size={20} />
-          </motion.button>
         )}
       </AnimatePresence>
 
@@ -184,24 +167,26 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             maxLength={100}
                             autoFocus
                           />
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSaveEdit();
-                            }}
-                            className="text-green-400 hover:text-green-300 p-1 rounded transition-colors"
-                          >
-                            <Check size={16} />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCancelEdit();
-                            }}
-                            className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
-                          >
-                            <X size={16} />
-                          </button>
+                          <div className="flex flex-col">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveEdit();
+                              }}
+                              className="text-green-400 hover:text-green-300 p-1 rounded transition-colors"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCancelEdit();
+                              }}
+                              className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <>

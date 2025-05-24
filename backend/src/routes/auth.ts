@@ -92,6 +92,12 @@ router.get(
   authenticateSession,
   async (req: Request & { user?: any }, res: Response) => {
     try {
+      // Add null check for req.session.user to satisfy TypeScript
+      if (!req.session.user) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+      }
+
       const user = await User.findById(req.session.user._id);
 
       if (!user) {

@@ -72,6 +72,24 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         )}
       </AnimatePresence>
 
+      {/* Mobile menu button */}
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={onToggle}
+        className="fixed top-4 left-4 z-30 md:hidden bg-[#602a4b] text-[#c1a57b] p-2 rounded-lg shadow-lg"
+      >
+        <Menu size={20} />
+      </motion.button>
+
+      {/* Desktop toggle button */}
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={onToggle}
+        className="hidden md:block fixed top-20 left-4 z-30 bg-[#602a4b] text-[#c1a57b] p-2 rounded-lg shadow-lg"
+      >
+        {isOpen ? <ChevronLeft size={20} /> : <Menu size={20} />}
+      </motion.button>
+
       {/* Sidebar */}
       <motion.div
         initial={false}
@@ -79,7 +97,10 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
           x: isOpen ? 0 : -320,
         }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed left-0 top-0 h-full w-80 bg-[#351a2b] z-50 flex flex-col border-r border-[#602a4b]"
+        className="fixed md:relative left-0 top-0 h-full w-80 bg-[#351a2b] z-50 md:z-0 flex flex-col border-r border-[#602a4b] md:block"
+        style={{
+          transform: window.innerWidth >= 768 ? "translateX(0)" : undefined,
+        }}
       >
         {/* Header */}
         <div className="p-4 border-b border-[#602a4b] flex items-center justify-between">
@@ -200,15 +221,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
           )}
         </div>
       </motion.div>
-
-      {/* Mobile menu button */}
-      <motion.button
-        whileTap={{ scale: 0.95 }}
-        onClick={onToggle}
-        className="fixed top-4 left-4 z-30 md:hidden bg-[#602a4b] text-[#c1a57b] p-2 rounded-lg shadow-lg"
-      >
-        <Menu size={20} />
-      </motion.button>
     </>
   );
 };

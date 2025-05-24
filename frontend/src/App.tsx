@@ -42,8 +42,18 @@ function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | undefined>();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768 && !sidebarOpen) {
+        setSidebarOpen(true);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [sidebarOpen]);
   useEffect(() => {
     const fetchSession = async () => {
       const sessionData = await getSession();

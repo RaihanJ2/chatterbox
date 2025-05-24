@@ -73,7 +73,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Mobile menu button - only show when sidebar is closed */}
+      {/* Toggle button - always visible when sidebar is closed */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -82,28 +82,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             exit={{ opacity: 0, scale: 0.8 }}
             whileTap={{ scale: 0.95 }}
             onClick={onToggle}
-            className="fixed top-20 left-4 z-30 md:hidden bg-[#602a4b] text-[#c1a57b] p-3 rounded-lg shadow-lg hover:bg-[#502040] transition-colors"
+            className="fixed top-20 left-4 z-30 bg-[#602a4b] text-[#c1a57b] p-3 rounded-lg shadow-lg hover:bg-[#502040] transition-colors"
           >
             <Menu size={20} />
           </motion.button>
         )}
       </AnimatePresence>
-
-      {/* Desktop toggle button - always visible on desktop */}
-      <motion.button
-        whileTap={{ scale: 0.95 }}
-        onClick={onToggle}
-        className="hidden md:block fixed top-20 z-30 bg-[#602a4b] text-[#c1a57b] p-2 rounded-lg shadow-lg hover:bg-[#502040] transition-colors"
-        style={{
-          left: isOpen ? "304px" : "16px", // Adjust position based on sidebar state
-        }}
-        animate={{
-          left: isOpen ? "304px" : "16px",
-        }}
-        transition={{ type: "spring", damping: 25, stiffness: 200 }}
-      >
-        {isOpen ? <ChevronLeft size={20} /> : <Menu size={20} />}
-      </motion.button>
 
       {/* Sidebar */}
       <motion.aside
@@ -116,7 +100,17 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
       >
         {/* Header */}
         <div className="p-4 border-b border-[#602a4b] flex items-center justify-between bg-[#2a1521]">
-          <h2 className="text-[#c1a57b] font-medium text-lg">Chat History</h2>
+          <div className="flex items-center gap-3">
+            {/* Menu button beside the title - only visible when sidebar is open */}
+            <button
+              onClick={onToggle}
+              className="text-[#c1a57b] hover:text-white p-2 rounded-lg hover:bg-[#432439] transition-colors"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <h2 className="text-[#c1a57b] font-medium text-lg">Chat History</h2>
+          </div>
+          {/* Keep X button for mobile only */}
           <button
             onClick={onToggle}
             className="text-[#c1a57b] hover:text-white p-2 rounded-lg hover:bg-[#432439] transition-colors md:hidden"

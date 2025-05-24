@@ -248,7 +248,7 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen font-poppins bg-[#432439]">
+    <div className="flex w-full h-screen font-poppins bg-[#432439]">
       {/* Sidebar - only show if user is logged in */}
       {session?.user && (
         <ChatSidebar

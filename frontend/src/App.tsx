@@ -10,7 +10,6 @@ import {
   sendMessageToAPI,
   getChatHistory,
   getChatById,
-  createNewChat,
   updateChatTitle,
   deleteChat,
   ChatSummary,

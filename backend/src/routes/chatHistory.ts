@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { authenticateToken } from "./auth";
+import { authenticateSession } from "./auth";
 import Chat from "../models/Chats";
 
 const router = Router();
@@ -7,7 +7,7 @@ const router = Router();
 // Get all chats for a user
 router.get(
   "/",
-  authenticateToken,
+  authenticateSession,
   async (req: Request & { user?: any }, res: Response) => {
     try {
       const chats = await Chat.find({ userId: req.user.id })
@@ -44,7 +44,7 @@ router.get(
 // Get specific chat with all messages
 router.get(
   "/:chatId",
-  authenticateToken,
+  authenticateSession,
   async (req: Request & { user?: any }, res: Response) => {
     try {
       const chat = await Chat.findOne({
@@ -68,7 +68,7 @@ router.get(
 // Create new chat
 router.post(
   "/",
-  authenticateToken,
+  authenticateSession,
   async (req: Request & { user?: any }, res: Response) => {
     try {
       const { title } = req.body;
@@ -91,7 +91,7 @@ router.post(
 // Update chat title
 router.patch(
   "/:chatId/title",
-  authenticateToken,
+  authenticateSession,
   async (req: Request & { user?: any }, res: Response) => {
     try {
       const { title } = req.body;
@@ -123,7 +123,7 @@ router.patch(
 // Delete chat
 router.delete(
   "/:chatId",
-  authenticateToken,
+  authenticateSession,
   async (req: Request & { user?: any }, res: Response) => {
     try {
       const chat = await Chat.findOneAndDelete({
@@ -147,7 +147,7 @@ router.delete(
 // Clear all messages from a chat (optional additional endpoint)
 router.delete(
   "/:chatId/messages",
-  authenticateToken,
+  authenticateSession,
   async (req: Request & { user?: any }, res: Response) => {
     try {
       const chat = await Chat.findOneAndUpdate(

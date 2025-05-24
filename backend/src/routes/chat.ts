@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Request, Response, Router } from "express";
-import { authenticateToken } from "./auth";
+import { authenticateSession } from "./auth";
 import Chat from "../models/Chats";
 
 const router = Router();
@@ -10,7 +10,7 @@ const API_KEY = process.env.API_KEY;
 
 router.post(
   "/",
-  authenticateToken,
+  authenticateSession,
   async (req: Request & { user?: any }, res: Response) => {
     try {
       const { message, chatId } = req.body;

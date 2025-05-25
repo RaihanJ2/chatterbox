@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// Configure axios to always send cookies
+// Configure axios to always send cookies for session-based auth
 axios.defaults.withCredentials = true;
 
 export const getSession = async () => {
@@ -14,7 +14,8 @@ export const getSession = async () => {
           id: response.data._id,
           name: response.data.username,
           email: response.data.email,
-          image: response.data.image,
+          // Note: Your backend doesn't store profile images, so we'll use a placeholder or remove this
+          image: undefined,
         },
       };
     }
@@ -33,7 +34,4 @@ export const logout = async () => {
     console.error("Failed to logout:", error);
     return false;
   }
-};
-export const handleAuthCallback = (token: string) => {
-  localStorage.setItem("authToken", token);
 };

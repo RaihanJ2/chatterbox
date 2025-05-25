@@ -1,135 +1,125 @@
+import axios from "axios";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+// Configure axios to always send cookies for session-based auth
+axios.defaults.withCredentials = true;
 
 export interface ChatSummary {
   _id: string;
   title: string;
   updatedAt: string;
   messageCount: number;
-  lastMessage: string;
+  lastMessage: string | null;
 }
 
-export interface ChatHistory {
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+export interface Chat {
   _id: string;
   title: string;
-  messages: Array<{
-    role: "user" | "assistant";
-    content: string;
-    timestamp: string;
-  }>;
-  createdAt: string;
+  messages: ChatMessage[];
   updatedAt: string;
+  createdAt: string;
 }
 
-// Helper function to make authenticated requests
-const makeAuthenticatedRequest = async (
-  url: string,
-  options: RequestInit = {}
-) => {
-  const response = await fetch(url, {
-    ...options,
-    credentials: "include", // Use cookies instead of Bearer tokens
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
+export interface SendMessageResponse {
+  response: string;
+  chatId: string;
+  title: string;
+}
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API Error: ${response.status} - ${errorText}`);
+export const sendMessageToAPI = async (
+  message: string,
+  chatId?: string
+): Promise<SendMessageResponse> => {
+  try {
+    const response = await axios.post(`${API_URL}/api/chat`, {
+      message,
+      chatId,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      // Handle specific HTTP errors
+      if (error.response?.status === 401) {
+        throw new Error("Authentication required. Please log in again.");
+      } else if (error.response?.status === 429) {
+        throw new Error("Rate limit exceeded. Please try again later.");
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+    }
+    throw new Error("Failed to send message. Please try again.");
   }
-
-  return response;
 };
 
-// Get all chat summaries for the user
 export const getChatHistory = async (): Promise<ChatSummary[]> => {
   try {
-    const response = await makeAuthenticatedRequest(`${API_URL}/api/chats`);
-    return response.json();
+    const response = await axios.get(`${API_URL}/api/chats`);
+    return response.data;
   } catch (error) {
-    console.error("Error fetching chat history:", error);
-    throw error;
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      throw new Error("Authentication required. Please log in again.");
+    }
+    throw new Error("Failed to fetch chat history");
   }
 };
 
-// Get specific chat with all messages
-export const getChatById = async (chatId: string): Promise<ChatHistory> => {
+export const getChatById = async (chatId: string): Promise<Chat> => {
   try {
-    const response = await makeAuthenticatedRequest(
-      `${API_URL}/api/chats/${chatId}`
-    );
-    return response.json();
+    const response = await axios.get(`${API_URL}/api/chats/${chatId}`);
+    return response.data;
   } catch (error) {
-    console.error("Error fetching chat:", error);
-    throw error;
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        throw new Error("Authentication required. Please log in again.");
+      } else if (error.response?.status === 404) {
+        throw new Error("Chat not found");
+      }
+    }
+    throw new Error("Failed to fetch chat");
   }
 };
 
-// Create new chat
-export const createNewChat = async (title?: string): Promise<ChatHistory> => {
-  try {
-    const response = await makeAuthenticatedRequest(`${API_URL}/api/chats`, {
-      method: "POST",
-      body: JSON.stringify({ title }),
-    });
-    return response.json();
-  } catch (error) {
-    console.error("Error creating chat:", error);
-    throw error;
-  }
-};
-
-// Update chat title
 export const updateChatTitle = async (
   chatId: string,
   title: string
 ): Promise<void> => {
   try {
-    await makeAuthenticatedRequest(`${API_URL}/api/chats/${chatId}/title`, {
-      method: "PATCH",
-      body: JSON.stringify({ title }),
-    });
+    await axios.patch(`${API_URL}/api/chats/${chatId}/title`, { title });
   } catch (error) {
-    console.error("Error updating chat title:", error);
-    throw error;
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      throw new Error("Authentication required. Please log in again.");
+    }
+    throw new Error("Failed to update chat title");
   }
 };
 
-// Delete chat
 export const deleteChat = async (chatId: string): Promise<void> => {
   try {
-    await makeAuthenticatedRequest(`${API_URL}/api/chats/${chatId}`, {
-      method: "DELETE",
-    });
+    await axios.delete(`${API_URL}/api/chats/${chatId}`);
   } catch (error) {
-    console.error("Error deleting chat:", error);
-    throw error;
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      throw new Error("Authentication required. Please log in again.");
+    }
+    throw new Error("Failed to delete chat");
   }
 };
 
-// Send message to API
-export async function sendMessageToAPI(
-  message: string,
-  chatId?: string
-): Promise<{ response: string; chatId: string; title: string }> {
+export const createNewChat = async (title?: string): Promise<Chat> => {
   try {
-    const response = await makeAuthenticatedRequest(`${API_URL}/api/chat`, {
-      method: "POST",
-      body: JSON.stringify({
-        message,
-        chatId,
-      }),
-    });
-
-    const data = await response.json();
-    return {
-      response: data.response,
-      chatId: data.chatId,
-      title: data.title,
-    };
+    const response = await axios.post(`${API_URL}/api/chats`, { title });
+    return response.data;
   } catch (error) {
-    console.error("Error calling API:", error);
-    throw error;
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      throw new Error("Authentication required. Please log in again.");
+    }
+    throw new Error("Failed to create new chat");
   }
-}
+};

@@ -56,21 +56,26 @@ function App() {
 
   useEffect(() => {
     const fetchSession = async () => {
-      const sessionData = await getSession();
-      setSession(sessionData);
+      try {
+        setIsLoading(true);
+        const sessionData = await getSession();
+        setSession(sessionData);
 
-      if (sessionData?.user) {
-        // Load chat history if user is logged in
-        await loadChatHistory();
+        if (sessionData?.user) {
+          // Load chat history if user is logged in
+          await loadChatHistory();
+        }
+      } catch (error) {
+        console.error("Error fetching session:", error);
+        setApiError("Failed to load session. Please refresh the page.");
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
     fetchSession();
   }, []);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -210,9 +215,11 @@ function App() {
               ? {
                   ...chat,
                   title: response.title,
-                  messageCount: chat.messageCount + 2, // user + assistant message
+                  messageCount: chat.messageCount + 2,
                   updatedAt: new Date().toISOString(),
-                  lastMessage: response.response.substring(0, 100) + "...",
+                  lastMessage:
+                    response.response.substring(0, 100) +
+                    (response.response.length > 100 ? "..." : ""),
                 }
               : chat
           )
@@ -221,25 +228,24 @@ function App() {
     } catch (error) {
       console.error("Error sending message:", error);
 
-      // Extract error message
+      // Handle authentication errors specifically
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-      setApiError(errorMessage);
 
-      // Add error message
-      const errorResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `Sorry, there was an error: ${errorMessage}. Please try again later.`,
-        role: "assistant",
-        timestamp: new Date(),
-      };
-
-      setMessages((prevMessages) => [...prevMessages, errorResponse]);
+      if (errorMessage.includes("Authentication required")) {
+        // Reset session if authentication failed
+        setSession({ user: null });
+        setMessages([]);
+        setChats([]);
+        setCurrentChatId(undefined);
+        setApiError("Your session has expired. Please log in again.");
+      } else {
+        setApiError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
   };
-
   if (isLoading && !session) {
     return (
       <div className="flex items-center justify-center h-screen bg-primary">

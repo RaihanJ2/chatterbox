@@ -1,26 +1,20 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { handleAuthCallback } from "../api/auth";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-
-    if (token) {
-      handleAuthCallback(token);
-      navigate("/");
-    } else {
-      navigate("/");
-      console.error("not token");
-    }
+    // Since we're using session-based auth, we just need to redirect back to home
+    // The session will be automatically handled by the backend
+    navigate("/");
   }, [navigate]);
+
   return (
     <div className="flex items-center justify-center h-screen bg-primary">
       <div className="text-light text-xl">Processing Login...</div>
     </div>
   );
 };
+
 export default AuthCallback;

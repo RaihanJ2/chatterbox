@@ -18,8 +18,8 @@ const AuthCallback = () => {
     }
   }, [navigate]);
   return (
-    <div className="flex items-center justify-center h-screen bg-[#432439]">
-      <div className="text-[#c1a57b] text-xl">Processing Login...</div>
+    <div className="flex items-center justify-center h-screen bg-primary">
+      <div className="text-light text-xl">Processing Login...</div>
     </div>
   );
 };

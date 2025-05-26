@@ -53,7 +53,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role }) => {
                       console.error("Failed to copy text: ", err);
                     });
                 }}
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-[#1e1e1e] text-gray-100 px-2 py-1 text-xs rounded transition-opacity"
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-[#1e1e1e] text-white px-2 py-1 text-xs rounded transition-opacity"
               >
                 {copiedIndex === i ? "Copied!" : "Copy"}
               </motion.button>
@@ -88,23 +88,25 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role }) => {
         initial={{ opacity: 0, x: isAssistant ? -10 : 10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
-        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 my-2 ${
-          isAssistant ? "bg-secondary mr-4" : "bg-light ml-4 text-secondary"
+        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+          isAssistant
+            ? "bg-colors-secondary mr-4"
+            : "bg-[#b09a7d] ml-4 text-[#602a4b]"
         }`}
       >
         {isAssistant ? (
-          <span className="text-highlight font-bold text-sm">
+          <span className="text-[#c1a57b] font-bold text-sm">
             <Box />
           </span>
         ) : (
-          <span className="font-medium text-sm ">Y</span>
+          <span className="font-medium text-sm">Y</span>
         )}
       </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className=" bg-secondary p-3 rounded-xl max-w-none text-white"
+        className=" bg-colors-secondary p-3 rounded-xl max-w-none text-white"
       >
         {renderContent()}
       </motion.div>

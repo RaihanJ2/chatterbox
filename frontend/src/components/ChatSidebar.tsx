@@ -79,31 +79,31 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
           x: isOpen ? 0 : -320,
         }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed left-0 top-0 h-full w-80 bg-[#351a2b] z-50 flex flex-col border-r border-secondary shadow-xl"
+        className="fixed left-0 top-0 h-full w-80 bg-[#351a2b] z-50 flex flex-col border-r border-[#602a4b] shadow-xl"
       >
         {/* Header */}
-        <div className="p-4 border-b border-secondary flex items-center justify-between bg-dark">
+        <div className="p-4 border-b border-[#602a4b] flex items-center justify-between bg-[#2a1521]">
           <div className="flex items-center gap-3">
             {/* Menu button beside the title - only visible when sidebar is open */}
             <button
               onClick={onToggle}
-              className="text-highlight hover:text-gray-100 p-2 rounded-lg hover:bg-primary transition-colors"
+              className="text-[#c1a57b] hover:text-white p-2 rounded-lg hover:bg-[#432439] transition-colors"
             >
               <ChevronLeft size={18} />
             </button>
-            <h2 className="text-highlight font-medium text-lg">Chat History</h2>
+            <h2 className="text-[#c1a57b] font-medium text-lg">Chat History</h2>
           </div>
           {/* Keep X button for mobile only */}
           <button
             onClick={onToggle}
-            className="text-highlight hover:text-gray-100 p-2 rounded-lg hover:bg-accent transition-colors md:hidden"
+            className="text-[#c1a57b] hover:text-white p-2 rounded-lg hover:bg-[#432439] transition-colors md:hidden"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* New Chat Button */}
-        <div className="p-4 bg-dark">
+        <div className="p-4 bg-[#2a1521]">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -114,7 +114,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 onToggle();
               }
             }}
-            className="w-full bg-secondary text-highlight p-3 rounded-lg flex items-center justify-center gap-2 hover:bg-accent transition-colors font-medium shadow-sm"
+            className="w-full bg-[#602a4b] text-[#c1a57b] p-3 rounded-lg flex items-center justify-center gap-2 hover:bg-[#502040] transition-colors font-medium shadow-sm"
           >
             <Plus size={18} />
             New Chat
@@ -122,7 +122,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-secondary scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#602a4b] scrollbar-track-transparent">
           <div className="p-4 space-y-2">
             {chats.map((chat, index) => (
               <motion.div
@@ -133,8 +133,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 transition={{ delay: index * 0.05 }}
                 className={`group relative p-3 rounded-lg cursor-pointer transition-all duration-200 ${
                   currentChatId === chat._id
-                    ? "bg-secondary text-gray-100 shadow-md"
-                    : "hover:bg-primary text-light hover:text-gray-100"
+                    ? "bg-[#602a4b] text-white shadow-md"
+                    : "hover:bg-[#432439] text-[#b09a7d] hover:text-white"
                 }`}
               >
                 <div
@@ -159,7 +159,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             type="text"
                             value={editTitle}
                             onChange={(e) => setEditTitle(e.target.value)}
-                            className="flex-1 bg-primary text-gray-100 px-3 py-2 rounded-md text-sm border border-secondary focus:border-highlight focus:outline-none"
+                            className="flex-1 bg-[#432439] text-white px-3 py-2 rounded-md text-sm border border-[#602a4b] focus:border-[#c1a57b] focus:outline-none"
                             onKeyDown={(e) => {
                               if (e.key === "Enter") handleSaveEdit();
                               if (e.key === "Escape") handleCancelEdit();
@@ -222,7 +222,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         e.stopPropagation();
                         handleStartEdit(chat);
                       }}
-                      className="p-1.5 text-light hover:text-gray-100 rounded hover:bg-secondary transition-colors"
+                      className="p-1.5 text-[#b09a7d] hover:text-white rounded hover:bg-[#602a4b] transition-colors"
                       title="Edit title"
                     >
                       <Edit3 size={14} />
@@ -253,7 +253,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="text-center text-tetriary py-12"
+                className="text-center text-[#8c5568] py-12"
               >
                 <MessageSquare size={40} className="mx-auto mb-3 opacity-50" />
                 <p className="text-sm font-medium mb-1">No chat history yet</p>
@@ -266,8 +266,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         </div>
 
         {/* Footer info */}
-        <div className="p-4 border-t border-secondary bg-dark">
-          <div className="text-xs text-tetriary text-center">
+        <div className="p-4 border-t border-[#602a4b] bg-[#2a1521]">
+          <div className="text-xs text-[#8c5568] text-center">
             {chats.length} chat{chats.length !== 1 ? "s" : ""} saved
           </div>
         </div>

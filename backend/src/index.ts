@@ -1,4 +1,3 @@
-// backend/src/index.ts
 import express from "express";
 import session from "express-session";
 import dotenv from "dotenv";

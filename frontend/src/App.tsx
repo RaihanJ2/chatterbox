@@ -68,6 +68,8 @@ function App() {
       } catch (error) {
         console.error("Error fetching session:", error);
         setApiError("Failed to load session. Please refresh the page.");
+        // Ensure chats is still an array even if there's an error
+        setChats([]);
       } finally {
         setIsLoading(false);
       }
@@ -83,9 +85,12 @@ function App() {
   const loadChatHistory = async () => {
     try {
       const chatHistory = await getChatHistory();
-      setChats(chatHistory);
+      // Ensure we always set an array, even if the API returns something unexpected
+      setChats(Array.isArray(chatHistory) ? chatHistory : []);
     } catch (error) {
       console.error("Error loading chat history:", error);
+      // Set empty array on error to prevent the map error
+      setChats([]);
     }
   };
 
@@ -123,8 +128,12 @@ function App() {
     try {
       await deleteChat(chatId);
 
-      // Remove from local state
-      setChats(chats.filter((chat) => chat._id !== chatId));
+      // Remove from local state - ensure chats is an array before filtering
+      setChats((prevChats) =>
+        Array.isArray(prevChats)
+          ? prevChats.filter((chat) => chat._id !== chatId)
+          : []
+      );
 
       // If we're currently viewing this chat, start a new one
       if (currentChatId === chatId) {
@@ -140,9 +149,13 @@ function App() {
     try {
       await updateChatTitle(chatId, title);
 
-      // Update local state
-      setChats(
-        chats.map((chat) => (chat._id === chatId ? { ...chat, title } : chat))
+      // Update local state - ensure chats is an array before mapping
+      setChats((prevChats) =>
+        Array.isArray(prevChats)
+          ? prevChats.map((chat) =>
+              chat._id === chatId ? { ...chat, title } : chat
+            )
+          : []
       );
     } catch (error) {
       console.error("Error updating chat title:", error);
@@ -208,21 +221,23 @@ function App() {
         // Refresh chat history to show the new chat
         await loadChatHistory();
       } else {
-        // Update the existing chat in the sidebar
+        // Update the existing chat in the sidebar - ensure chats is an array
         setChats((prevChats) =>
-          prevChats.map((chat) =>
-            chat._id === response.chatId
-              ? {
-                  ...chat,
-                  title: response.title,
-                  messageCount: chat.messageCount + 2,
-                  updatedAt: new Date().toISOString(),
-                  lastMessage:
-                    response.response.substring(0, 100) +
-                    (response.response.length > 100 ? "..." : ""),
-                }
-              : chat
-          )
+          Array.isArray(prevChats)
+            ? prevChats.map((chat) =>
+                chat._id === response.chatId
+                  ? {
+                      ...chat,
+                      title: response.title,
+                      messageCount: chat.messageCount + 2,
+                      updatedAt: new Date().toISOString(),
+                      lastMessage:
+                        response.response.substring(0, 100) +
+                        (response.response.length > 100 ? "..." : ""),
+                    }
+                  : chat
+              )
+            : []
         );
       }
     } catch (error) {
@@ -246,6 +261,7 @@ function App() {
       setIsLoading(false);
     }
   };
+
   if (isLoading && !session) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#432439]">
@@ -259,7 +275,7 @@ function App() {
       {/* Sidebar - always render if user is logged in, positioned fixed */}
       {session?.user && (
         <ChatSidebar
-          chats={chats}
+          chats={Array.isArray(chats) ? chats : []}
           currentChatId={currentChatId}
           onChatSelect={handleChatSelect}
           onNewChat={handleNewChat}

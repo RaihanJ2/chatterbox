@@ -1,8 +1,8 @@
-import express, { Request, Response } from "express";
-import Chat from "../models/Chats";
+import { Request, Response, Router } from "express";
 import { authenticateSession } from "./auth";
+import Chat from "../models/Chats";
 
-const router = express.Router();
+const router = Router();
 
 // Get all chats for a user
 router.get(
@@ -11,29 +11,37 @@ router.get(
   async (req: Request & { user?: any }, res: Response) => {
     try {
       const chats = await Chat.find({ userId: req.user.id })
+        .select("_id title updatedAt messages")
         .sort({ updatedAt: -1 })
-        .select("title messages createdAt updatedAt");
+        .limit(50);
 
-      const chatSummaries = chats.map((chat) => ({
+      // Include message count and last message preview
+      const chatsWithPreview = chats.map((chat) => ({
         _id: chat._id,
         title: chat.title,
-        messageCount: chat.messages.length,
         updatedAt: chat.updatedAt,
+        messageCount: chat.messages.length,
         lastMessage:
           chat.messages.length > 0
-            ? chat.messages[chat.messages.length - 1].content.substring(0, 100)
-            : "",
+            ? chat.messages[chat.messages.length - 1].content.substring(
+                0,
+                100
+              ) +
+              (chat.messages[chat.messages.length - 1].content.length > 100
+                ? "..."
+                : "")
+            : null,
       }));
 
-      res.json(chatSummaries);
+      res.json(chatsWithPreview);
     } catch (error) {
-      console.error("Error fetching chats:", error);
-      res.status(500).json({ message: "Error fetching chats" });
+      console.error("Error fetching chat history:", error);
+      res.status(500).json({ error: "Failed to fetch chat history" });
     }
   }
 );
 
-// Get specific chat
+// Get specific chat with all messages
 router.get(
   "/:chatId",
   authenticateSession,
@@ -45,95 +53,51 @@ router.get(
       });
 
       if (!chat) {
-        res.status(404).json({ message: "Chat not found" });
+        res.status(404).json({ error: "Chat not found" });
         return;
       }
 
       res.json(chat);
     } catch (error) {
       console.error("Error fetching chat:", error);
-      res.status(500).json({ message: "Error fetching chat" });
+      res.status(500).json({ error: "Failed to fetch chat" });
     }
   }
 );
 
-// Send message (create new chat or add to existing)
+// Create new chat
 router.post(
-  "/message",
+  "/",
   authenticateSession,
   async (req: Request & { user?: any }, res: Response) => {
     try {
-      const { message, chatId } = req.body;
+      const { title } = req.body;
 
-      if (!message || !message.trim()) {
-        res.status(400).json({ message: "Message is required" });
-        return;
-      }
-
-      let chat;
-      let isNewChat = false;
-
-      if (chatId) {
-        // Add to existing chat
-        chat = await Chat.findOne({ _id: chatId, userId: req.user.id });
-        if (!chat) {
-          res.status(404).json({ message: "Chat not found" });
-          return;
-        }
-      } else {
-        // Create new chat
-        chat = new Chat({
-          userId: req.user.id,
-          messages: [],
-        });
-        isNewChat = true;
-      }
-
-      // Add user message
-      chat.messages.push({
-        role: "user",
-        content: message,
-        timestamp: new Date(),
+      const newChat = new Chat({
+        userId: req.user.id,
+        title: title || "New Chat",
+        messages: [],
       });
 
-      // Simple AI response (replace with actual AI integration)
-      const aiResponse = `This is a response to: "${message}". Please integrate with your AI service here.`;
-
-      chat.messages.push({
-        role: "assistant",
-        content: aiResponse,
-        timestamp: new Date(),
-      });
-
-      // Generate title for new chats
-      if (isNewChat) {
-        chat.generateTitle();
-      }
-
-      await chat.save();
-
-      res.json({
-        response: aiResponse,
-        chatId: chat._id,
-        title: chat.title,
-      });
+      await newChat.save();
+      res.status(201).json(newChat);
     } catch (error) {
-      console.error("Error processing message:", error);
-      res.status(500).json({ message: "Error processing message" });
+      console.error("Error creating chat:", error);
+      res.status(500).json({ error: "Failed to create chat" });
     }
   }
 );
 
 // Update chat title
-router.put(
+router.patch(
   "/:chatId/title",
   authenticateSession,
   async (req: Request & { user?: any }, res: Response) => {
     try {
       const { title } = req.body;
 
-      if (!title || !title.trim()) {
-        res.status(400).json({ message: "Title is required" });
+      if (!title || title.trim().length === 0) {
+        res.status(400).json({ error: "Title is required" });
         return;
       }
 
@@ -144,14 +108,14 @@ router.put(
       );
 
       if (!chat) {
-        res.status(404).json({ message: "Chat not found" });
+        res.status(404).json({ error: "Chat not found" });
         return;
       }
 
-      res.json({ message: "Title updated successfully" });
+      res.json({ title: chat.title });
     } catch (error) {
-      console.error("Error updating title:", error);
-      res.status(500).json({ message: "Error updating title" });
+      console.error("Error updating chat title:", error);
+      res.status(500).json({ error: "Failed to update chat title" });
     }
   }
 );
@@ -168,14 +132,39 @@ router.delete(
       });
 
       if (!chat) {
-        res.status(404).json({ message: "Chat not found" });
+        res.status(404).json({ error: "Chat not found" });
         return;
       }
 
       res.json({ message: "Chat deleted successfully" });
     } catch (error) {
       console.error("Error deleting chat:", error);
-      res.status(500).json({ message: "Error deleting chat" });
+      res.status(500).json({ error: "Failed to delete chat" });
+    }
+  }
+);
+
+// Clear all messages from a chat (optional additional endpoint)
+router.delete(
+  "/:chatId/messages",
+  authenticateSession,
+  async (req: Request & { user?: any }, res: Response) => {
+    try {
+      const chat = await Chat.findOneAndUpdate(
+        { _id: req.params.chatId, userId: req.user.id },
+        { messages: [] },
+        { new: true }
+      );
+
+      if (!chat) {
+        res.status(404).json({ error: "Chat not found" });
+        return;
+      }
+
+      res.json({ message: "Chat messages cleared successfully", chat });
+    } catch (error) {
+      console.error("Error clearing chat messages:", error);
+      res.status(500).json({ error: "Failed to clear chat messages" });
     }
   }
 );

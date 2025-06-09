@@ -264,14 +264,14 @@ function App() {
 
   if (isLoading && !session) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#432439]">
-        <div className="text-[#c1a57b] text-xl">Loading...</div>
+      <div className="flex items-center justify-center h-screen bg-primary">
+        <div className="text-highlight text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex w-full h-screen font-poppins bg-[#432439] relative">
+    <div className="flex w-full h-screen font-poppins bg-primary relative">
       {/* Sidebar - always render if user is logged in, positioned fixed */}
       {session?.user && (
         <ChatSidebar
@@ -289,14 +289,14 @@ function App() {
       {/* Main content - always full width since sidebar is fixed */}
       <div className="flex flex-col flex-1 w-full">
         {/* Header */}
-        <header className=" bg-[#602a4b] py-4 px-6">
+        <header className=" bg-secondary py-4 px-6">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Menu button beside logo - only show when user is logged in */}
               {session?.user && (
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="text-[#c1a57b] hover:text-white p-2 rounded-lg hover:bg-[#502040] transition-colors"
+                  className="text-highlight hover:text-white p-2 rounded-lg hover:bg-accent transition-colors"
                 >
                   <Menu size={20} />
                 </button>
@@ -304,7 +304,7 @@ function App() {
               <motion.h1
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="flex flex-row items-center justify-center text-[#c1a57b] text-xl font-medium"
+                className="flex flex-row items-center justify-center text-highlight text-xl font-medium"
               >
                 Chatterb
                 <motion.span
@@ -328,12 +328,12 @@ function App() {
                     />
                   </div>
                 )}
-                <span className="text-[#c1a57b] text-sm">
+                <span className="text-highlight text-sm">
                   {session.user.name}
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="cursor-pointer text-[#c1a57b] px-4 py-2 rounded-md hover:bg-[#502040]"
+                  className="cursor-pointer text-highlight px-4 py-2 rounded-md hover:bg-accent"
                 >
                   Logout
                 </button>
@@ -341,7 +341,7 @@ function App() {
             ) : (
               <button
                 onClick={handleGoogleSignIn}
-                className="cursor-pointer text-[#c1a57b] flex flex-row items-center gap-2 p-2 rounded-md hover:bg-[#502040]"
+                className="cursor-pointer text-highlight flex flex-row items-center gap-2 p-2 rounded-md hover:bg-accent"
               >
                 <FaGoogle /> Login with Google
               </button>
@@ -357,7 +357,7 @@ function App() {
                 <motion.span
                   initial={{ scale: 0, rotate: 0 }}
                   animate={{ scale: 1, rotate: 360 }}
-                  className="text-[#c1a57b] font-bold bg-[#602a4b] p-4 rounded-full"
+                  className="text-highlight font-bold bg-secondary p-4 rounded-full"
                 >
                   <Box size={50} />
                 </motion.span>
@@ -365,7 +365,7 @@ function App() {
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="text-xl font-medium text-[#b09a7d] mb-2"
+                  className="text-xl font-medium text-highlight mb-2"
                 >
                   Welcome to Chatterbox
                 </motion.h2>
@@ -373,7 +373,7 @@ function App() {
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.65 }}
-                  className="text-[#b09a7d] max-w-md"
+                  className="text-highlight max-w-md"
                 >
                   Please log in with Google to start chatting and save your
                   conversation history.
@@ -384,7 +384,7 @@ function App() {
                 <motion.span
                   initial={{ scale: 0, rotate: 0 }}
                   animate={{ scale: 1, rotate: 360 }}
-                  className="text-[#c1a57b] font-bold bg-[#602a4b] p-4 rounded-full"
+                  className="text-highlight font-bold bg-secondary p-4 rounded-full"
                 >
                   <Box size={50} />
                 </motion.span>
@@ -392,7 +392,7 @@ function App() {
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="text-xl font-medium text-[#b09a7d] mb-2"
+                  className="text-xl font-medium text-highlight mb-2"
                 >
                   How can I help you today?
                 </motion.h2>
@@ -400,7 +400,7 @@ function App() {
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.65 }}
-                  className="text-[#b09a7d] max-w-md"
+                  className="text-highlight max-w-md"
                 >
                   Ask me anything, from solving complex problems to creative
                   tasks.
@@ -420,8 +420,8 @@ function App() {
             )}
             {isLoading && (
               <div className="flex items-start">
-                <div className="w-8 h-8 rounded-full bg-[#602a4b] flex items-center justify-center mr-4 flex-shrink-0">
-                  <span className="text-[#c1a57b] font-bold text-sm">
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center mr-4 flex-shrink-0">
+                  <span className="text-highlight font-bold text-sm">
                     <Box />
                   </span>
                 </div>
@@ -439,7 +439,7 @@ function App() {
                         ease: "easeInOut",
                         delay: i * 0.2,
                       }}
-                      className="h-2 w-2 bg-[#c1a57b] rounded-full"
+                      className="h-2 w-2 bg-hightext-highlight rounded-full"
                     ></motion.div>
                   ))}
                 </div>
@@ -450,7 +450,7 @@ function App() {
         </main>
 
         {/* Input area */}
-        <footer className="p-4 bg-[#602a4b]">
+        <footer className="p-4 bg-secondary">
           <div className="max-w-4xl pl-2 mx-auto">
             <ChatInput
               onSendMessage={handleSendMessage}
@@ -459,7 +459,7 @@ function App() {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-xs text-center text-[#b09a7d] mt-2"
+              className="text-xs text-center text-highlight mt-2"
             >
               Chatterbox may display inaccurate info, including about people, so
               double-check its responses.

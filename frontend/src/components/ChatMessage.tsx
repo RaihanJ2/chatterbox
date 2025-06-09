@@ -29,7 +29,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role }) => {
           );
         }
       } else if (i % 3 === 1) {
-        // language name
         continue;
       } else if (i % 3 === 2) {
         const lang = parts[i - 1] || "plaintext";

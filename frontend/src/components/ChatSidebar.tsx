@@ -79,12 +79,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
           x: isOpen ? 0 : -320,
         }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed left-0 top-0 h-full w-80 bg-[#351a2b] z-50 flex flex-col border-r border-secondary shadow-xl"
+        className="fixed left-0 top-0 h-full w-80 bg-primary z-50 flex flex-col border-r border-secondary shadow-xl"
       >
         {/* Header */}
         <div className="p-4 border-b border-secondary flex items-center justify-between bg-dark">
           <div className="flex items-center gap-3">
-            {/* Menu button beside the title - only visible when sidebar is open */}
             <button
               onClick={onToggle}
               className="text-highlight hover:text-gray-100 p-2 rounded-lg hover:bg-primary transition-colors"
@@ -93,7 +92,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             </button>
             <h2 className="text-highlight font-medium text-lg">Chat History</h2>
           </div>
-          {/* Keep X button for mobile only */}
           <button
             onClick={onToggle}
             className="text-highlight hover:text-gray-100 p-2 rounded-lg hover:bg-accent transition-colors md:hidden"
@@ -140,7 +138,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 <div
                   onClick={() => {
                     onChatSelect(chat._id);
-                    // Close sidebar on mobile after selecting chat
                     if (window.innerWidth < 768) {
                       onToggle();
                     }

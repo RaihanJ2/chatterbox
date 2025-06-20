@@ -11,9 +11,19 @@ const axiosInstance = axios.create({
   },
 });
 
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.log("Unauthorized access detected");
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const getSession = async () => {
   try {
-    const response = await axiosInstance.get(`${API_URL}/api/auth/profile`);
+    const response = await axiosInstance.get("/api/auth/profile");
     if (response.data) {
       return {
         user: {
@@ -32,10 +42,20 @@ export const getSession = async () => {
 
 export const logout = async () => {
   try {
-    await axios.post(`${API_URL}/api/auth/logout`);
+    await axiosInstance.post("/api/auth/logout");
     return true;
   } catch (error) {
     console.error("Failed to logout:", error);
     return false;
+  }
+};
+
+export const login = async (email: string) => {
+  try {
+    const response = await axiosInstance.post("/api/auth/login", { email });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to login:", error);
+    throw error;
   }
 };

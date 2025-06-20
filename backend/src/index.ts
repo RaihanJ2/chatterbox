@@ -24,6 +24,7 @@ dotenv.config();
 const app = express();
 connectDB();
 app.use(express.json());
+app.set("trust proxy", 1);
 
 app.use(
   cors({
@@ -43,23 +44,22 @@ app.use(
       ttl: 24 * 60 * 60,
     }),
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       httpOnly: true,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
 
-// Initialize passport and sessions
 app.use(passport.initialize());
-app.use(passport.session()); // This was missing!
+app.use(passport.session());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/chats", chatHistoryRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

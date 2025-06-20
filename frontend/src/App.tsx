@@ -264,9 +264,8 @@ function App() {
 
   if (isLoading && !session) {
     return (
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto p-6 space-y-6"></div>
-        <div className="flex flex-col items-center justify-center h-full text-center py-12">
+      <main className="flex-1 flex items-center justify-center bg-secondary">
+        <div className="flex flex-col items-center text-center">
           <motion.span
             initial={{ scale: 0.7, rotate: 0 }}
             animate={{ scale: 1, rotate: 360 }}

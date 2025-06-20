@@ -43,9 +43,9 @@ app.use(
       ttl: 24 * 60 * 60,
     }),
     cookie: {
-      secure: false,
+      secure: true,
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     },
   })

@@ -264,9 +264,24 @@ function App() {
 
   if (isLoading && !session) {
     return (
-      <div className="flex items-center justify-center h-screen bg-primary">
-        <div className="text-highlight text-xl">Loading...</div>
-      </div>
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto p-6 space-y-6"></div>
+        <div className="flex flex-col items-center justify-center h-full text-center py-12">
+          <motion.span
+            initial={{ scale: 0.7, rotate: 0 }}
+            animate={{ scale: 1, rotate: 360 }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+            }}
+            className="text-highlight font-bold p-4 rounded-full"
+          >
+            <Box size={50} />
+          </motion.span>
+        </div>
+      </main>
     );
   }
 

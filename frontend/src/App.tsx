@@ -264,7 +264,7 @@ function App() {
 
   if (isLoading && !session) {
     return (
-      <main className="flex-1 w-full h-full flex items-center justify-center bg-secondary">
+      <main className="fixed inset-0 flex items-center justify-center bg-secondary z-50">
         <div className="flex flex-col items-center text-center">
           <motion.span
             initial={{ scale: 0.7, rotate: 0 }}

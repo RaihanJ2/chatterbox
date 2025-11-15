@@ -22,22 +22,30 @@ router.post("/login", async (req, res) => {
             username: user.username,
             email: user.email,
         };
-        res.status(200).json({
-            message: "Login successful",
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-            },
+        // Save session explicitly
+        req.session.save((err) => {
+            if (err) {
+                console.error("Session save error:", err);
+                res.status(500).json({ message: "Session error" });
+                return;
+            }
+            res.status(200).json({
+                message: "Login successful",
+                user: {
+                    id: user._id,
+                    username: user.username,
+                    email: user.email,
+                },
+            });
         });
     }
     catch (error) {
+        console.error("Login error:", error);
         res.status(500).json({ message: "Server error" });
     }
 });
 router.get("/google", passport_1.default.authenticate("google", { scope: ["profile", "email"] }));
 router.get("/google/callback", passport_1.default.authenticate("google", {
-    session: false,
     failureRedirect: "/login",
 }), (req, res) => {
     const user = req.user;
@@ -47,8 +55,15 @@ router.get("/google/callback", passport_1.default.authenticate("google", {
         email: user.email,
         googleId: user.googleId,
     };
-    // Redirect without token since we're using sessions
-    res.redirect(`${process.env.CLIENT_URL}/auth/callback`);
+    // Save session before redirecting
+    req.session.save((err) => {
+        if (err) {
+            console.error("Session save error:", err);
+            res.redirect(`${process.env.CLIENT_URL}/login?error=session`);
+            return;
+        }
+        res.redirect(`${process.env.CLIENT_URL}/auth/callback`);
+    });
 });
 router.post("/logout", (req, res) => {
     req.session.destroy((error) => {
@@ -57,25 +72,34 @@ router.post("/logout", (req, res) => {
             res.status(500).json({ message: "Error logging out" });
         }
         else {
-            res.clearCookie("connect.sid"); // Clear the session cookie
+            // Clear all possible session cookie names
+            res.clearCookie("connect.sid");
+            res.clearCookie("connect.sid", { path: "/" });
+            res.clearCookie("connect.sid", {
+                path: "/",
+                domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined,
+            });
             res.status(200).json({ message: "Logged out successfully" });
         }
     });
 });
-// Session-based authentication middleware
 const authenticateSession = (req, res, next) => {
+    console.log("Session check:", {
+        sessionID: req.sessionID,
+        hasSession: !!req.session,
+        hasUser: !!req.session?.user,
+        user: req.session?.user,
+    });
     if (!req.session.user) {
         res.status(401).json({ message: "Authentication required" });
         return;
     }
-    // Set user info for routes
     req.user = { id: req.session.user._id };
     next();
 };
 exports.authenticateSession = authenticateSession;
 router.get("/profile", exports.authenticateSession, async (req, res) => {
     try {
-        // Add null check for req.session.user to satisfy TypeScript
         if (!req.session.user) {
             res.status(401).json({ message: "Authentication required" });
             return;
@@ -85,10 +109,26 @@ router.get("/profile", exports.authenticateSession, async (req, res) => {
             res.status(404).json({ message: "User not found" });
             return;
         }
-        res.json(user);
+        // Return user data in the format expected by frontend
+        res.json({
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            googleId: user.googleId,
+        });
     }
     catch (error) {
+        console.error("Profile fetch error:", error);
         res.status(500).json({ message: "Server error" });
     }
+});
+// Add a session check route for debugging
+router.get("/session", (req, res) => {
+    res.json({
+        sessionID: req.sessionID,
+        hasSession: !!req.session,
+        hasUser: !!req.session?.user,
+        user: req.session?.user || null,
+    });
 });
 exports.default = router;
